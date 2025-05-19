@@ -374,7 +374,16 @@ const ReportWaste: React.FC = () => {
               </div>
             </div>
 
-            <QRCodeGenerator value={qrCodeValue} />
+            <QRCodeGenerator
+              value={qrCodeValue}
+              wasteData={{
+                ipfsHash: ipfsHash || '',
+                plasticType: form.getValues('plasticType'),
+                quantity: form.getValues('quantity'),
+                location: form.getValues('location'),
+                timestamp: new Date().toISOString()
+              }}
+            />
 
             <div className="mt-6 text-center">
               <Button

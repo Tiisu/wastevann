@@ -3,12 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { QrCode, CheckCircle, Loader2 } from 'lucide-react';
+import { QrCode, CheckCircle, Loader2, MapPin, Filter } from 'lucide-react';
 import { PlasticType, WasteReport } from '@/utils/web3Utils';
 import { toast } from 'sonner';
 import Footer from '@/components/Footer';
 import * as contracts from '@/utils/contracts';
 import { useContract } from '@/context/ContractContext';
+import QRScannerModal from '@/components/QRScannerModal';
+import { getIPFSGatewayUrl } from '@/utils/ipfsUtils';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const AgentDashboard: React.FC = () => {
   const [reports, setReports] = useState<WasteReport[]>([]);
@@ -16,6 +20,9 @@ const AgentDashboard: React.FC = () => {
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [locationFilter, setLocationFilter] = useState<string>('');
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<string | null>(null);
   const { collectWaste } = useContract();
 
   // Function to fetch waste reports from blockchain
@@ -44,11 +51,12 @@ const AgentDashboard: React.FC = () => {
           id: Number(report.reportId),
           plasticType,
           quantity: Number(report.quantity),
-          location: "Location data not available", // Location might not be stored on-chain
+          location: report.location || "Location data not available", // Use location from blockchain if available
           timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
           rewardEstimate: Number(report.tokenReward),
           reporter: report.reporter,
-          status: report.isCollected ? 'collected' : 'pending'
+          status: report.isCollected ? 'collected' : 'pending',
+          ipfsHash: report.ipfsHash // Store IPFS hash for image viewing
         };
       });
 
@@ -80,17 +88,50 @@ const AgentDashboard: React.FC = () => {
     }
   };
 
-  const startScanQR = (reportId: number) => {
-    setIsScanning(true);
-    setSelectedReportId(reportId);
-
-    // In a real implementation, you would scan a QR code here
-    // For now, we'll simulate the scan and call the blockchain directly
-    handleCollectWaste(reportId);
+  // Get current location
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation(`${latitude}, ${longitude}`);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast.error("Could not get your current location");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser");
+    }
   };
 
-  const handleCollectWaste = async (reportId: number) => {
+  // Use effect to get location when component mounts
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  const startScanQR = (reportId: number) => {
+    setSelectedReportId(reportId);
+    setShowQRScanner(true);
+  };
+
+  const handleCloseQRScanner = () => {
+    setShowQRScanner(false);
+    setSelectedReportId(null);
+  };
+
+  const handleConfirmCollection = async (reportData: any, reportId: number) => {
     try {
+      setIsScanning(true);
+
+      // Verify that the QR code data matches the report
+      const report = reports.find(r => r.id === reportId);
+
+      if (!report) {
+        throw new Error("Report not found");
+      }
+
       // Call the smart contract to collect waste
       await collectWaste(reportId);
 
@@ -101,6 +142,7 @@ const AgentDashboard: React.FC = () => {
     } catch (err) {
       console.error("Error collecting waste:", err);
       toast.error("Failed to verify waste collection on blockchain");
+      throw err; // Re-throw to be caught by the QR scanner modal
     } finally {
       setIsScanning(false);
       setSelectedReportId(null);
@@ -112,8 +154,15 @@ const AgentDashboard: React.FC = () => {
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   };
 
-  const nearbyReports = reports.filter(report => report.status === 'pending');
-  const collectedReports = reports.filter(report => report.status === 'collected');
+  // Filter reports by location if a filter is set
+  const filteredReports = locationFilter
+    ? reports.filter(report =>
+        report.location.toLowerCase().includes(locationFilter.toLowerCase())
+      )
+    : reports;
+
+  const nearbyReports = filteredReports.filter(report => report.status === 'pending');
+  const collectedReports = filteredReports.filter(report => report.status === 'collected');
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -128,17 +177,56 @@ const AgentDashboard: React.FC = () => {
                 View and collect nearby waste reports to earn rewards.
               </p>
             </div>
-            <Button
-              onClick={fetchWasteReports}
-              disabled={isLoading}
-              className="bg-waste-600 hover:bg-waste-700 text-white"
-            >
-              {isLoading ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Refreshing...</>
-              ) : (
-                <>Refresh Reports</>
-              )}
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                onClick={fetchWasteReports}
+                disabled={isLoading}
+                className="bg-waste-600 hover:bg-waste-700 text-white"
+              >
+                {isLoading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Refreshing...</>
+                ) : (
+                  <>Refresh Reports</>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Location filter */}
+          <div className="mt-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-end gap-4">
+              <div className="flex-1">
+                <Label htmlFor="location-filter" className="mb-2 block">Filter by Location</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                  <Input
+                    id="location-filter"
+                    placeholder="Enter location to filter reports..."
+                    className="pl-10"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setLocationFilter('')}
+                  disabled={!locationFilter}
+                >
+                  Clear
+                </Button>
+                {currentLocation && (
+                  <Button
+                    variant="outline"
+                    className="flex items-center"
+                    onClick={() => setLocationFilter(currentLocation)}
+                  >
+                    <MapPin className="h-4 w-4 mr-2" /> Use My Location
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -281,6 +369,16 @@ const AgentDashboard: React.FC = () => {
         )}
       </div>
       <Footer />
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && selectedReportId && (
+        <QRScannerModal
+          isOpen={showQRScanner}
+          onClose={handleCloseQRScanner}
+          onConfirmCollection={handleConfirmCollection}
+          reportId={selectedReportId}
+        />
+      )}
     </div>
   );
 };

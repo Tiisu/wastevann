@@ -1,0 +1,25 @@
+{
+  "name": "wastevan",
+  "version": "1.0.0",
+  "description": "WasteVan DApp for waste management",
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network ethereumSepolia",
+    "copy-artifacts": "node scripts/copy-artifacts.js",
+    "postcompile": "npm run copy-artifacts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "dotenv": "^16.4.5",
+    "fs-extra": "^11.3.0",
+    "hardhat": "^2.19.5"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.6"
+  }
+}

@@ -231,3 +231,62 @@ export const getUserWasteReports = async (address: string) => {
     return [];
   }
 };
+
+// Get all waste reports (for agent dashboard)
+export const getAllWasteReports = async () => {
+  try {
+    const { wasteVan } = await getContract();
+    const reportCount = await wasteVan.reportCounter();
+
+    // Convert BigInt to number for iteration
+    const count = Number(reportCount);
+    console.log(`Total waste reports in contract: ${count}`);
+
+    const reports = [];
+    // Fetch reports in batches to avoid too many concurrent requests
+    const batchSize = 10;
+
+    for (let i = 1; i <= count; i += batchSize) {
+      const promises = [];
+
+      // Create a batch of promises
+      for (let j = i; j < i + batchSize && j <= count; j++) {
+        promises.push(
+          (async () => {
+            try {
+              const report = await wasteVan.wasteReports(j);
+              // Get additional details for this report
+              const fullReport = {
+                reportId: j,
+                reporter: report.reporter,
+                ipfsHash: report.ipfsHash,
+                quantity: Number(report.quantity),
+                wasteType: report.wasteType,
+                timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
+                isCollected: report.isCollected,
+                collectedBy: report.collectedBy,
+                tokenReward: Number(report.tokenReward)
+              };
+              return fullReport;
+            } catch (error) {
+              console.error(`Error fetching report #${j}:`, error);
+              return null;
+            }
+          })()
+        );
+      }
+
+      // Wait for all promises in this batch
+      const batchResults = await Promise.all(promises);
+
+      // Filter out null results and add to reports array
+      reports.push(...batchResults.filter(report => report !== null));
+    }
+
+    console.log(`Found ${reports.length} total waste reports`);
+    return reports;
+  } catch (error) {
+    console.error('Error getting all waste reports:', error);
+    return [];
+  }
+};

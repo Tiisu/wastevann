@@ -7,6 +7,8 @@ import { useWallet, formatAddress } from '@/utils/web3Utils';
 import { toast } from 'sonner';
 import Footer from '@/components/Footer';
 import { Wallet, ArrowUpRight } from 'lucide-react';
+import { getTokenBalance, getUserWasteReports } from '@/utils/contracts';
+import { ethers } from 'ethers';
 
 interface Transaction {
   id: number;
@@ -32,42 +34,48 @@ const TokenWallet: React.FC = () => {
   }, [account]);
 
   const fetchWalletData = async () => {
+    if (!account) return;
+
     setLoading(true);
     try {
-      // In a real app, this would call the blockchain
-      // Mock data for demonstration
-      setTokenBalance(157.35);
-      setTransactions([
-        {
-          id: 1,
-          type: 'Earned',
-          amount: 25,
-          timestamp: Date.now() - 86400000 * 2, // 2 days ago
-          address: "0x0000000000000000000000000000000000000000",
-          description: "Waste collection reward"
-        },
-        {
-          id: 2,
-          type: 'Earned',
-          amount: 32.5,
-          timestamp: Date.now() - 86400000 * 5, // 5 days ago
-          address: "0x0000000000000000000000000000000000000000",
-          description: "Waste collection reward"
-        },
-        {
-          id: 3,
-          type: 'Received',
-          amount: 100,
-          timestamp: Date.now() - 86400000 * 10, // 10 days ago
-          address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-          description: "Initial allocation"
-        },
-      ]);
+      // Get token balance from blockchain
+      const balanceWei = await getTokenBalance(account);
+      const balanceEther = parseFloat(ethers.formatEther(balanceWei));
+      setTokenBalance(balanceEther);
+
+      // Get waste reports from blockchain
+      await fetchWasteReports(account);
     } catch (error) {
       console.error("Error fetching wallet data:", error);
-      toast.error("Failed to load wallet data");
+      toast.error("Failed to load wallet data from blockchain");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWasteReports = async (address: string) => {
+    try {
+      const reports = await getUserWasteReports(address);
+
+      // Convert waste reports to transaction format
+      const txs: Transaction[] = reports.map(report => {
+        return {
+          id: Number(report.reportId),
+          type: 'Earned',
+          amount: Number(ethers.formatEther(report.tokenReward)),
+          timestamp: Number(report.timestamp) * 1000, // Convert from seconds to milliseconds
+          address: report.collectedBy || "0x0000000000000000000000000000000000000000",
+          description: `Waste report: ${report.wasteType} (${report.quantity} kg)${report.isCollected ? ' - Collected' : ' - Pending'}`
+        };
+      });
+
+      // Sort by timestamp (newest first)
+      txs.sort((a, b) => b.timestamp - a.timestamp);
+
+      setTransactions(txs);
+    } catch (error) {
+      console.error("Error fetching waste reports:", error);
+      toast.error("Failed to load waste reports from blockchain");
     }
   };
 
@@ -97,7 +105,7 @@ const TokenWallet: React.FC = () => {
             <p className="text-gray-500 dark:text-gray-400 mb-6">
               Please connect your Ethereum wallet to view your tokens and transaction history.
             </p>
-            <Button 
+            <Button
               onClick={connectWallet}
               disabled={isConnecting}
               className="bg-waste-600 hover:bg-waste-700 text-white"
@@ -137,14 +145,27 @@ const TokenWallet: React.FC = () => {
               <Card>
                 <CardHeader className="bg-waste-50 dark:bg-waste-900">
                   <CardTitle>Token Actions</CardTitle>
-                  <CardDescription>Send, receive, or exchange your tokens</CardDescription>
+                  <CardDescription>Manage your tokens and view blockchain data</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-2 gap-3">
-                    <Button className="bg-waste-600 hover:bg-waste-700 text-white">
-                      Send Tokens
+                    <Button
+                      onClick={fetchWalletData}
+                      disabled={loading}
+                      className="bg-waste-600 hover:bg-waste-700 text-white"
+                    >
+                      {loading ? 'Refreshing...' : 'Refresh Data'}
                     </Button>
-                    <Button variant="outline" className="border-waste-500 text-waste-700 hover:bg-waste-50 hover:text-waste-800">
+                    <Button
+                      variant="outline"
+                      className="border-waste-500 text-waste-700 hover:bg-waste-50 hover:text-waste-800"
+                      onClick={() => {
+                        if (account) {
+                          // Open etherscan or similar explorer based on network
+                          window.open(`https://sepolia.etherscan.io/address/${account}`, '_blank');
+                        }
+                      }}
+                    >
                       View on Explorer <ArrowUpRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
@@ -154,8 +175,8 @@ const TokenWallet: React.FC = () => {
 
             <Card>
               <CardHeader className="bg-waste-50 dark:bg-waste-900">
-                <CardTitle>Transaction History</CardTitle>
-                <CardDescription>Your recent token transactions</CardDescription>
+                <CardTitle>Waste Reports & Rewards</CardTitle>
+                <CardDescription>Your waste reports and token rewards from the blockchain</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {loading ? (
@@ -169,9 +190,9 @@ const TokenWallet: React.FC = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead>Type</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Amount (WVT)</TableHead>
+                        <TableHead className="text-right">Tokens (WVT)</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -179,24 +200,20 @@ const TokenWallet: React.FC = () => {
                         <TableRow key={tx.id}>
                           <TableCell>{formatDate(tx.timestamp)}</TableCell>
                           <TableCell>
-                            <span 
+                            <span
                               className={`inline-block px-2 py-1 text-xs rounded-full
-                                ${tx.type === 'Earned' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
-                                  tx.type === 'Sent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 
-                                  'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                ${tx.description.includes('Collected') ?
+                                  'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                                 }`}
                             >
-                              {tx.type}
+                              {tx.description.includes('Collected') ? 'Collected' : 'Pending'}
                             </span>
                           </TableCell>
                           <TableCell>{tx.description}</TableCell>
                           <TableCell className="text-right font-medium">
-                            <span 
-                              className={`
-                                ${tx.type === 'Sent' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}
-                              `}
-                            >
-                              {tx.type === 'Sent' ? '-' : '+'}{tx.amount}
+                            <span className="text-green-600 dark:text-green-400">
+                              {tx.amount.toFixed(2)}
                             </span>
                           </TableCell>
                         </TableRow>
@@ -205,7 +222,9 @@ const TokenWallet: React.FC = () => {
                   </Table>
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-gray-500 dark:text-gray-400">No transactions found.</p>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No waste reports found. Start reporting waste to earn tokens!
+                    </p>
                   </div>
                 )}
               </CardContent>

@@ -23,7 +23,7 @@ export const getContract = async () => {
     // Check if we're on the correct network
     const network = await provider.getNetwork();
     const chainId = Number(network.chainId);
-    
+
     // Sepolia testnet chainId is 11155111
     // You can modify this to check for your target network
     if (chainId !== 11155111 && chainId !== 1337 && chainId !== 31337) {
@@ -175,22 +175,56 @@ export const getUserWasteReports = async (address: string) => {
   try {
     const { wasteVan } = await getContract();
     const reportCount = await wasteVan.reportCounter();
-    
+
+    // Convert BigInt to number for iteration
+    const count = Number(reportCount);
+    console.log(`Total waste reports in contract: ${count}`);
+
     const reports = [];
-    for (let i = 1; i <= reportCount; i++) {
-      try {
-        const report = await wasteVan.wasteReports(i);
-        if (report.reporter.toLowerCase() === address.toLowerCase()) {
-          reports.push({
-            id: i,
-            ...report
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching report #${i}:`, error);
+    // Fetch reports in batches to avoid too many concurrent requests
+    const batchSize = 10;
+
+    for (let i = 1; i <= count; i += batchSize) {
+      const promises = [];
+
+      // Create a batch of promises
+      for (let j = i; j < i + batchSize && j <= count; j++) {
+        promises.push(
+          (async () => {
+            try {
+              const report = await wasteVan.wasteReports(j);
+              if (report.reporter.toLowerCase() === address.toLowerCase()) {
+                // Get additional details for this report
+                const fullReport = {
+                  reportId: j,
+                  reporter: report.reporter,
+                  ipfsHash: report.ipfsHash,
+                  quantity: report.quantity,
+                  wasteType: report.wasteType,
+                  timestamp: report.timestamp,
+                  isCollected: report.isCollected,
+                  collectedBy: report.collectedBy,
+                  tokenReward: report.tokenReward
+                };
+                return fullReport;
+              }
+              return null;
+            } catch (error) {
+              console.error(`Error fetching report #${j}:`, error);
+              return null;
+            }
+          })()
+        );
       }
+
+      // Wait for all promises in this batch
+      const batchResults = await Promise.all(promises);
+
+      // Filter out null results and add to reports array
+      reports.push(...batchResults.filter(report => report !== null));
     }
-    
+
+    console.log(`Found ${reports.length} waste reports for address ${address}`);
     return reports;
   } catch (error) {
     console.error('Error getting user waste reports:', error);

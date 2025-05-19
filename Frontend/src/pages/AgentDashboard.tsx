@@ -51,7 +51,7 @@ const AgentDashboard: React.FC = () => {
           id: Number(report.reportId),
           plasticType,
           quantity: Number(report.quantity),
-          location: report.location || "Location data not available", // Use location from blockchain if available
+          location: report.location, // Use location from blockchain if available
           timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
           rewardEstimate: Number(report.tokenReward),
           reporter: report.reporter,
@@ -155,6 +155,7 @@ const AgentDashboard: React.FC = () => {
   };
 
   // Filter reports by location if a filter is set
+  
   const filteredReports = locationFilter
     ? reports.filter(report =>
         report.location.toLowerCase().includes(locationFilter.toLowerCase())

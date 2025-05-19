@@ -29,6 +29,7 @@ contract WasteVan is Ownable, ReentrancyGuard {
         string ipfsHash; // For storing waste images
         uint256 quantity;
         string wasteType;
+        string location; // GPS coordinates or location description
         uint256 timestamp;
         bool isCollected;
         address collectedBy;
@@ -81,10 +82,11 @@ contract WasteVan is Ownable, ReentrancyGuard {
     function reportWaste(
         string memory _ipfsHash,
         uint256 _quantity,
-        string memory _wasteType
+        string memory _wasteType,
+        string memory _location
     ) external {
         require(users[msg.sender].isRegistered, "User not registered");
-        
+
         reportCounter++;
         wasteReports[reportCounter] = WasteReport({
             reportId: reportCounter,
@@ -92,6 +94,7 @@ contract WasteVan is Ownable, ReentrancyGuard {
             ipfsHash: _ipfsHash,
             quantity: _quantity,
             wasteType: _wasteType,
+            location: _location,
             timestamp: block.timestamp,
             isCollected: false,
             collectedBy: address(0),
@@ -110,7 +113,7 @@ contract WasteVan is Ownable, ReentrancyGuard {
 
         report.isCollected = true;
         report.collectedBy = msg.sender;
-        
+
         // Update agent stats
         agents[msg.sender].totalCollections++;
         agents[msg.sender].points += POINTS_PER_COLLECTION;
@@ -154,6 +157,7 @@ contract WasteVan is Ownable, ReentrancyGuard {
         string memory ipfsHash,
         uint256 quantity,
         string memory wasteType,
+        string memory location,
         bool isCollected,
         address collectedBy
     ) {
@@ -163,6 +167,7 @@ contract WasteVan is Ownable, ReentrancyGuard {
             report.ipfsHash,
             report.quantity,
             report.wasteType,
+            report.location,
             report.isCollected,
             report.collectedBy
         );
@@ -172,4 +177,4 @@ contract WasteVan is Ownable, ReentrancyGuard {
     function withdraw() external onlyOwner {
         payable(owner()).transfer(address(this).balance);
     }
-} 
+}

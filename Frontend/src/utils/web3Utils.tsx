@@ -3,13 +3,13 @@ import { ethers } from 'ethers';
 import { toast } from 'sonner';
 
 export enum PlasticType {
-  PET = 1,   // Polyethylene terephthalate
-  HDPE = 2,  // High-density polyethylene
-  PVC = 3,   // Polyvinyl chloride
-  LDPE = 4,  // Low-density polyethylene
-  PP = 5,    // Polypropylene
-  PS = 6,    // Polystyrene
-  OTHER = 7  // Other plastics
+  PET = 0,   // Polyethylene terephthalate
+  HDPE = 1,  // High-density polyethylene
+  PVC = 2,   // Polyvinyl chloride
+  LDPE = 3,  // Low-density polyethylene
+  PP = 4,    // Polypropylene
+  PS = 5,    // Polystyrene
+  OTHER = 6  // Other plastics
 }
 
 // For TypeScript to recognize window.ethereum
@@ -52,7 +52,7 @@ const initialWalletState: WalletState = {
   isConnecting: false,
 };
 
-// Sample waste reports data 
+// Sample waste reports data
 export const sampleWasteReports: WasteReport[] = [
   {
     id: '00001',
@@ -129,7 +129,7 @@ export const useWallet = () => {
         try {
           const provider = new ethers.BrowserProvider(window.ethereum);
           const accounts = await provider.listAccounts();
-          
+
           if (accounts.length > 0) {
             const address = accounts[0].address;
             setState(prev => ({ ...prev, account: address }));

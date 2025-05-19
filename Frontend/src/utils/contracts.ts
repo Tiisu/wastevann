@@ -82,20 +82,40 @@ export const registerAgent = async () => {
   }
 };
 
-export const reportWaste = async (ipfsHash: string, quantity: number, wasteType: string) => {
+export const reportWasteWithLocation = async (ipfsHash: string, quantity: number, wasteType: string, location: string) => {
   try {
     toast.loading('Submitting waste report...');
     const { wasteVan } = await getContract();
-    const tx = await wasteVan.reportWaste(ipfsHash, quantity, wasteType);
+
+    // Log the parameters being sent to the contract
+    console.log('Reporting waste with parameters:');
+    console.log('IPFS Hash:', ipfsHash);
+    console.log('Quantity:', quantity);
+    console.log('Waste Type:', wasteType);
+    console.log('Location:', location);
+
+    const tx = await wasteVan.reportWaste(ipfsHash, quantity, wasteType, location);
     toast.loading(`Transaction submitted. Waiting for confirmation...`);
     await tx.wait();
     toast.success('Waste reported successfully!');
     return tx;
   } catch (error) {
     console.error('Error reporting waste:', error);
-    toast.error('Failed to report waste. Please try again.');
+    // Provide more detailed error information
+    if (error.message && error.message.includes('User not registered')) {
+      toast.error('You need to register before reporting waste. Please register first.');
+    } else {
+      toast.error('Failed to report waste. Please try again.');
+    }
     throw error;
   }
+};
+
+// Keep the old function for backward compatibility
+export const reportWaste = async (ipfsHash: string, quantity: number, wasteType: string) => {
+  // Default location if not provided
+  const defaultLocation = "0, 0";
+  return reportWasteWithLocation(ipfsHash, quantity, wasteType, defaultLocation);
 };
 
 export const collectWaste = async (reportId: number) => {

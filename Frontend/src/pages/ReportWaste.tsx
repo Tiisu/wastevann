@@ -138,8 +138,8 @@ const ReportWaste: React.FC = () => {
         // Convert plastic type to string for the contract
         const wasteTypeString = PlasticType[data.plasticType];
 
-        // Submit the waste report to the blockchain
-        await contracts.reportWaste(hash, data.quantity, wasteTypeString);
+        // Submit the waste report to the blockchain with location
+        await contracts.reportWasteWithLocation(hash, data.quantity, wasteTypeString, data.location);
       } catch (error) {
         console.error("Error submitting to blockchain:", error);
         toast.error("Failed to submit to blockchain. Your report is saved locally.");

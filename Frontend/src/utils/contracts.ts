@@ -118,6 +118,38 @@ export const reportWaste = async (ipfsHash: string, quantity: number, wasteType:
   return reportWasteWithLocation(ipfsHash, quantity, wasteType, defaultLocation);
 };
 
+export const approveWaste = async (reportId: number) => {
+  try {
+    toast.loading('Approving waste...');
+    const { wasteVan } = await getContract();
+    const tx = await wasteVan.approveWaste(reportId);
+    toast.loading(`Transaction submitted. Waiting for confirmation...`);
+    await tx.wait();
+    toast.success('Waste approved successfully!');
+    return tx;
+  } catch (error) {
+    console.error('Error approving waste:', error);
+    toast.error('Failed to approve waste. Please try again.');
+    throw error;
+  }
+};
+
+export const rejectWaste = async (reportId: number, reason: string) => {
+  try {
+    toast.loading('Rejecting waste...');
+    const { wasteVan } = await getContract();
+    const tx = await wasteVan.rejectWaste(reportId, reason);
+    toast.loading(`Transaction submitted. Waiting for confirmation...`);
+    await tx.wait();
+    toast.success('Waste rejected successfully!');
+    return tx;
+  } catch (error) {
+    console.error('Error rejecting waste:', error);
+    toast.error('Failed to reject waste. Please try again.');
+    throw error;
+  }
+};
+
 export const collectWaste = async (reportId: number) => {
   try {
     toast.loading('Collecting waste...');
@@ -229,12 +261,15 @@ export const getUserWasteReports = async (address: string) => {
                   reportId: j,
                   reporter: report.reporter,
                   ipfsHash: report.ipfsHash,
-                  quantity: report.quantity,
+                  quantity: Number(report.quantity),
                   wasteType: report.wasteType,
-                  timestamp: report.timestamp,
+                  location: report.location,
+                  timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
                   isCollected: report.isCollected,
                   collectedBy: report.collectedBy,
-                  tokenReward: report.tokenReward
+                  tokenReward: Number(report.tokenReward),
+                  status: Number(report.status), // 0: Pending, 1: Approved, 2: Rejected
+                  rejectionReason: report.rejectionReason || ""
                 };
                 return fullReport;
               }
@@ -292,10 +327,13 @@ export const getAllWasteReports = async () => {
                 ipfsHash: report.ipfsHash,
                 quantity: Number(report.quantity),
                 wasteType: report.wasteType,
+                location: report.location,
                 timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
                 isCollected: report.isCollected,
                 collectedBy: report.collectedBy,
-                tokenReward: Number(report.tokenReward)
+                tokenReward: Number(report.tokenReward),
+                status: Number(report.status), // 0: Pending, 1: Approved, 2: Rejected
+                rejectionReason: report.rejectionReason || ""
               };
               return fullReport;
             } catch (error) {

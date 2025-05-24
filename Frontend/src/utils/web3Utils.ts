@@ -35,8 +35,9 @@ export interface WasteReport {
   timestamp: number;
   rewardEstimate: number;
   reporter: string;
-  status: 'pending' | 'collected' | 'verified';
+  status: 'pending' | 'collected' | 'verified' | 'rejected';
   ipfsHash?: string; // IPFS hash for the waste image
+  rejectionReason?: string; // Reason for rejection if applicable
 }
 
 // Mock waste reports for demonstration

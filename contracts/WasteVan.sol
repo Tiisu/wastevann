@@ -23,6 +23,12 @@ contract WasteVan is Ownable, ReentrancyGuard {
         uint256 totalPointsDistributed;
     }
 
+    enum VerificationStatus {
+        Pending,
+        Approved,
+        Rejected
+    }
+
     struct WasteReport {
         uint256 reportId;
         address reporter;
@@ -34,6 +40,8 @@ contract WasteVan is Ownable, ReentrancyGuard {
         bool isCollected;
         address collectedBy;
         uint256 tokenReward;
+        VerificationStatus status;
+        string rejectionReason; // Reason for rejection if applicable
     }
 
     mapping(address => User) public users;
@@ -49,6 +57,8 @@ contract WasteVan is Ownable, ReentrancyGuard {
     event AgentRegistered(address indexed agent);
     event WasteReported(uint256 indexed reportId, address indexed reporter, string ipfsHash);
     event WasteCollected(uint256 indexed reportId, address indexed agent);
+    event WasteApproved(uint256 indexed reportId, address indexed agent);
+    event WasteRejected(uint256 indexed reportId, address indexed agent, string reason);
     event TokensDistributed(address indexed user, uint256 amount);
     event PointsPurchased(address indexed agent, uint256 amount);
 
@@ -118,19 +128,22 @@ contract WasteVan is Ownable, ReentrancyGuard {
             timestamp: block.timestamp,
             isCollected: false,
             collectedBy: address(0),
-            tokenReward: _quantity * TOKENS_PER_POINT
+            tokenReward: _quantity * TOKENS_PER_POINT,
+            status: VerificationStatus.Pending,
+            rejectionReason: ""
         });
 
         users[msg.sender].totalWasteReported += _quantity;
         emit WasteReported(reportCounter, msg.sender, _ipfsHash);
     }
 
-    function collectWaste(uint256 _reportId) external {
+    function approveWaste(uint256 _reportId) public {
         require(agents[msg.sender].isVerified, "Not a verified agent");
         WasteReport storage report = wasteReports[_reportId];
-        require(!report.isCollected, "Waste already collected");
+        require(report.status == VerificationStatus.Pending, "Report already processed");
         require(report.reporter != address(0), "Invalid report");
 
+        report.status = VerificationStatus.Approved;
         report.isCollected = true;
         report.collectedBy = msg.sender;
 
@@ -147,8 +160,27 @@ contract WasteVan is Ownable, ReentrancyGuard {
             // The owner can manually distribute tokens later
         }
 
+        emit WasteApproved(_reportId, msg.sender);
         emit WasteCollected(_reportId, msg.sender);
         emit TokensDistributed(report.reporter, report.tokenReward);
+    }
+
+    function rejectWaste(uint256 _reportId, string memory _reason) external {
+        require(agents[msg.sender].isVerified, "Not a verified agent");
+        WasteReport storage report = wasteReports[_reportId];
+        require(report.status == VerificationStatus.Pending, "Report already processed");
+        require(report.reporter != address(0), "Invalid report");
+        require(bytes(_reason).length > 0, "Rejection reason required");
+
+        report.status = VerificationStatus.Rejected;
+        report.rejectionReason = _reason;
+
+        emit WasteRejected(_reportId, msg.sender, _reason);
+    }
+
+    // Keep the original collectWaste function for backward compatibility
+    function collectWaste(uint256 _reportId) external {
+        approveWaste(_reportId);
     }
 
     function purchasePoints() external payable {
@@ -209,7 +241,9 @@ contract WasteVan is Ownable, ReentrancyGuard {
         uint256 timestamp,
         bool isCollected,
         address collectedBy,
-        uint256 tokenReward
+        uint256 tokenReward,
+        VerificationStatus status,
+        string memory rejectionReason
     ) {
         WasteReport memory report = wasteReports[_reportId];
         return (
@@ -222,7 +256,9 @@ contract WasteVan is Ownable, ReentrancyGuard {
             report.timestamp,
             report.isCollected,
             report.collectedBy,
-            report.tokenReward
+            report.tokenReward,
+            report.status,
+            report.rejectionReason
         );
     }
 

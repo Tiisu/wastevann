@@ -12,10 +12,13 @@ interface ContractContextType {
   agentStats: any;
   tokenBalance: string;
   connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
   registerUser: (username: string, email: string) => Promise<void>;
   registerAgent: () => Promise<void>;
   reportWaste: (ipfsHash: string, quantity: number, wasteType: string) => Promise<void>;
   collectWaste: (reportId: number) => Promise<void>;
+  approveWaste: (reportId: number) => Promise<void>;
+  rejectWaste: (reportId: number, reason: string) => Promise<void>;
   purchasePoints: (amount: string) => Promise<void>;
 }
 
@@ -156,6 +159,34 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const handleApproveWaste = async (reportId: number) => {
+    try {
+      await contracts.approveWaste(reportId);
+      // Refresh agent stats
+      if (account) {
+        const stats = await contracts.getAgentStats(account);
+        setAgentStats(stats);
+      }
+    } catch (error) {
+      console.error('Error approving waste:', error);
+      throw error;
+    }
+  };
+
+  const handleRejectWaste = async (reportId: number, reason: string) => {
+    try {
+      await contracts.rejectWaste(reportId, reason);
+      // Refresh agent stats
+      if (account) {
+        const stats = await contracts.getAgentStats(account);
+        setAgentStats(stats);
+      }
+    } catch (error) {
+      console.error('Error rejecting waste:', error);
+      throw error;
+    }
+  };
+
   const handlePurchasePoints = async (amount: string) => {
     try {
       await contracts.purchasePoints(amount);
@@ -266,6 +297,8 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     registerAgent: handleRegisterAgent,
     reportWaste: handleReportWaste,
     collectWaste: handleCollectWaste,
+    approveWaste: handleApproveWaste,
+    rejectWaste: handleRejectWaste,
     purchasePoints: handlePurchasePoints,
   };
 

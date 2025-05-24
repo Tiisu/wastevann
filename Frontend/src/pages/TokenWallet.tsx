@@ -17,6 +17,8 @@ interface Transaction {
   timestamp: number;
   address: string;
   description: string;
+  status?: number; // 0: Pending, 1: Approved, 2: Rejected
+  rejectionReason?: string;
 }
 
 const TokenWallet: React.FC = () => {
@@ -59,13 +61,28 @@ const TokenWallet: React.FC = () => {
 
       // Convert waste reports to transaction format
       const txs: Transaction[] = reports.map(report => {
+        // Map verification status: 0: Pending, 1: Approved, 2: Rejected
+        let statusText = 'Pending';
+        if (report.status === 1) {
+          statusText = 'Approved';
+        } else if (report.status === 2) {
+          statusText = 'Rejected';
+        }
+
+        let description = `Waste report: ${report.wasteType} (${report.quantity} kg) - ${statusText}`;
+        if (report.status === 2 && report.rejectionReason) {
+          description += ` (${report.rejectionReason})`;
+        }
+
         return {
           id: Number(report.reportId),
           type: 'Earned',
-          amount: Number(ethers.formatEther(report.tokenReward)),
+          amount: report.status === 1 ? Number(ethers.formatEther(report.tokenReward)) : 0, // Only show tokens for approved reports
           timestamp: Number(report.timestamp) * 1000, // Convert from seconds to milliseconds
           address: report.collectedBy || "0x0000000000000000000000000000000000000000",
-          description: `Waste report: ${report.wasteType} (${report.quantity} kg)${report.isCollected ? ' - Collected' : ' - Pending'}`
+          description,
+          status: report.status, // Store the numeric status for easier checking
+          rejectionReason: report.rejectionReason
         };
       });
 
@@ -202,17 +219,23 @@ const TokenWallet: React.FC = () => {
                           <TableCell>
                             <span
                               className={`inline-block px-2 py-1 text-xs rounded-full
-                                ${tx.description.includes('Collected') ?
+                                ${tx.status === 1 ?
                                   'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                  tx.status === 2 ?
+                                  'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
                                   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                                 }`}
                             >
-                              {tx.description.includes('Collected') ? 'Collected' : 'Pending'}
+                              {tx.status === 1 ? 'Approved' : tx.status === 2 ? 'Rejected' : 'Pending'}
                             </span>
                           </TableCell>
                           <TableCell>{tx.description}</TableCell>
                           <TableCell className="text-right font-medium">
-                            <span className="text-green-600 dark:text-green-400">
+                            <span className={
+                              tx.status === 1 ? "text-green-600 dark:text-green-400" :
+                              tx.status === 2 ? "text-red-600 dark:text-red-400" :
+                              "text-gray-600 dark:text-gray-400"
+                            }>
                               {tx.amount.toFixed(2)}
                             </span>
                           </TableCell>

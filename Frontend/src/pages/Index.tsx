@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import StatsSection from '../components/StatsSection';
 import UserRegistration from '../components/UserRegistration';
+import WalletConnectionTest from '../components/WalletConnectionTest';
 import { Button } from '../components/ui/button';
 import Footer from '../components/Footer';
 import { useContract } from '../context/ContractContext';
@@ -147,6 +148,11 @@ const Index: React.FC = () => {
     <div>
       <Hero />
       <StatsSection />
+
+      {/* Temporary test component */}
+      <div className="py-8">
+        <WalletConnectionTest />
+      </div>
 
       {/* Show user registration form if user is connected but not registered */}
       {account && !isUser && <div id="registration"><UserRegistration /></div>}

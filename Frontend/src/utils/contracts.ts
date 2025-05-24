@@ -184,8 +184,12 @@ export const purchasePoints = async (amount: string) => {
 
 export const getUserStats = async (address: string) => {
   try {
+    console.log('getUserStats called for address:', address);
     const { wasteVan } = await getContract();
-    return await wasteVan.getUserStats(address);
+    console.log('Contract instance obtained, calling getUserStats...');
+    const result = await wasteVan.getUserStats(address);
+    console.log('getUserStats result:', result);
+    return result;
   } catch (error) {
     console.error('Error getting user stats:', error);
     return null;
@@ -194,8 +198,11 @@ export const getUserStats = async (address: string) => {
 
 export const getAgentStats = async (address: string) => {
   try {
+    console.log('Getting agent stats for address:', address);
     const { wasteVan } = await getContract();
-    return await wasteVan.getAgentStats(address);
+    const stats = await wasteVan.getAgentStats(address);
+    console.log('Agent stats result:', stats);
+    return stats;
   } catch (error) {
     console.error('Error getting agent stats:', error);
     return null;

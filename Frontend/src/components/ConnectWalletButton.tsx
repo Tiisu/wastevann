@@ -15,16 +15,40 @@ const ConnectWalletButton: React.FC = () => {
 
   // Redirect to registration page if needed
   useEffect(() => {
+    console.log('ConnectWalletButton useEffect triggered:', { account, needsRegistration });
     if (account && needsRegistration) {
+      console.log('Redirecting to registration page...');
       toast.info('Please complete your registration');
       navigate('/registration');
     }
   }, [account, needsRegistration, navigate]);
 
+  // Listen for custom needsRegistration event as backup
+  useEffect(() => {
+    const handleNeedsRegistration = (event: CustomEvent) => {
+      console.log('Custom needsRegistration event received:', event.detail);
+      if (event.detail.needsRegistration) {
+        console.log('Redirecting via custom event...');
+        navigate('/registration');
+      }
+    };
+
+    window.addEventListener('needsRegistration', handleNeedsRegistration as EventListener);
+
+    return () => {
+      window.removeEventListener('needsRegistration', handleNeedsRegistration as EventListener);
+    };
+  }, [navigate]);
+
   const handleConnect = async () => {
     try {
       setIsConnecting(true);
       await connectWallet();
+
+      // Add a small delay to ensure state is updated before checking
+      setTimeout(() => {
+        console.log('Post-connect check:', { account, needsRegistration });
+      }, 1000);
     } catch (error) {
       console.error('Error connecting wallet:', error);
     } finally {

@@ -51,23 +51,29 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         // Check if user is registered
         const stats = await contracts.getUserStats(userAddress);
+        console.log('Raw user stats from contract:', stats);
         userRegistered = !!(stats && stats.username && stats.username.length > 0);
+        console.log('User registration status:', { userRegistered, stats });
         setIsUser(userRegistered);
         setUserStats(stats);
       } catch (error) {
-        console.log('User not registered yet:', error);
+        console.log('User not registered yet or contract call failed:', error);
         setIsUser(false);
+        userRegistered = false;
       }
 
       try {
         // Check if user is an agent
         const agentStats = await contracts.getAgentStats(userAddress);
+        console.log('Raw agent stats from contract:', agentStats);
         agentRegistered = !!(agentStats && agentStats.isVerified);
+        console.log('Agent registration status:', { agentRegistered, agentStats });
         setIsAgent(agentRegistered);
         setAgentStats(agentStats);
       } catch (error) {
-        console.log('Not an agent:', error);
+        console.log('Not an agent or contract call failed:', error);
         setIsAgent(false);
+        agentRegistered = false;
       }
 
       try {
@@ -81,12 +87,24 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Set needsRegistration if the user is not registered as either a user or an agent
       const needsReg = !userRegistered && !agentRegistered;
+      console.log('ContractContext connectWallet:', {
+        userAddress,
+        userRegistered,
+        agentRegistered,
+        needsReg
+      });
       setNeedsRegistration(needsReg);
 
       // Redirect to registration page if needed
       if (needsReg) {
+        console.log('User needs registration, showing toast...');
         toast.info('Please complete your registration');
         // We'll handle the redirect in the ConnectWalletButton component
+
+        // Also trigger a custom event for additional handling
+        window.dispatchEvent(new CustomEvent('needsRegistration', {
+          detail: { address: userAddress, needsRegistration: true }
+        }));
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
@@ -233,6 +251,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setAccount(null);
         setIsUser(false);
         setIsAgent(false);
+        setNeedsRegistration(false);
         setUserStats(null);
         setAgentStats(null);
         setTokenBalance('0');
@@ -241,12 +260,17 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const newAccount = accounts[0];
         setAccount(newAccount);
 
+        let userRegistered = false;
+        let agentRegistered = false;
+
         // Refresh user data
         try {
           const stats = await contracts.getUserStats(newAccount);
-          setIsUser(stats && stats.username && stats.username.length > 0);
+          userRegistered = !!(stats && stats.username && stats.username.length > 0);
+          setIsUser(userRegistered);
           setUserStats(stats);
         } catch (error) {
+          console.log('User not registered yet:', error);
           setIsUser(false);
           setUserStats(null);
         }
@@ -254,9 +278,11 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Refresh agent data
         try {
           const agentStats = await contracts.getAgentStats(newAccount);
-          setIsAgent(agentStats && agentStats.isVerified);
+          agentRegistered = !!(agentStats && agentStats.isVerified);
+          setIsAgent(agentRegistered);
           setAgentStats(agentStats);
         } catch (error) {
+          console.log('Not an agent:', error);
           setIsAgent(false);
           setAgentStats(null);
         }
@@ -266,7 +292,17 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const balance = await contracts.getTokenBalance(newAccount);
           setTokenBalance(ethers.formatEther(balance));
         } catch (error) {
+          console.log('Error getting token balance:', error);
           setTokenBalance('0');
+        }
+
+        // Set needsRegistration if the user is not registered as either a user or an agent
+        const needsReg = !userRegistered && !agentRegistered;
+        setNeedsRegistration(needsReg);
+
+        // Show info message if registration is needed
+        if (needsReg) {
+          toast.info('Please complete your registration');
         }
       }
     };

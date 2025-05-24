@@ -149,36 +149,11 @@ export function getContract(provider: ethers.BrowserProvider | null) {
 
 export async function getWasteStats() {
   try {
-    // Try to get contract instance
-    const provider = window.ethereum ? new ethers.BrowserProvider(window.ethereum) : null;
+    // Import the proper contract functions
+    const { getAllWasteReports } = await import('./contracts');
 
-    if (!provider) {
-      console.log('No provider available, returning mock data');
-      // Return mock data if no provider is available
-      return {
-        totalWasteCollected: 12450, // kg
-        totalTokensDistributed: 24900,
-        activeUsers: 532,
-        impactMetric: "Prevented 37.35 tons of CO2 emissions"
-      };
-    }
-
-    // Get contract instance
-    const contract = getContract(provider);
-
-    if (!contract) {
-      console.log('No contract available, returning mock data');
-      // Return mock data if contract is not available
-      return {
-        totalWasteCollected: 12450, // kg
-        totalTokensDistributed: 24900,
-        activeUsers: 532,
-        impactMetric: "Prevented 37.35 tons of CO2 emissions"
-      };
-    }
-
-    // Get report counter (total number of waste reports)
-    const reportCounter = await contract.reportCounter();
+    // Get all waste reports from the blockchain
+    const reports = await getAllWasteReports();
 
     // Calculate total waste collected and tokens distributed
     let totalWaste = 0;
@@ -186,18 +161,11 @@ export async function getWasteStats() {
     let uniqueUsers = new Set();
 
     // Loop through all reports to calculate stats
-    // Note: This is not efficient for large numbers of reports
-    // In a production environment, you would use events or a backend service
-    for (let i = 1; i <= reportCounter; i++) {
-      try {
-        const report = await contract.wasteReports(i);
-        totalWaste += Number(report.quantity);
-        totalTokens += Number(report.tokenReward);
-        uniqueUsers.add(report.reporter.toLowerCase());
-      } catch (error) {
-        console.error(`Error fetching report #${i}:`, error);
-      }
-    }
+    reports.forEach(report => {
+      totalWaste += Number(report.quantity);
+      totalTokens += Number(report.tokenReward);
+      uniqueUsers.add(report.reporter.toLowerCase());
+    });
 
     // Calculate environmental impact (simplified calculation)
     // Assuming 1kg of plastic waste = 3kg of CO2 emissions prevented

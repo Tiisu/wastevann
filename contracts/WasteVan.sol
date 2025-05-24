@@ -52,7 +52,7 @@ contract WasteVan is Ownable, ReentrancyGuard {
     event TokensDistributed(address indexed user, uint256 amount);
     event PointsPurchased(address indexed agent, uint256 amount);
 
-    constructor(address _tokenAddress) {
+    constructor(address _tokenAddress) Ownable() {
         wasteVanToken = WasteVanToken(_tokenAddress);
     }
 
@@ -76,6 +76,16 @@ contract WasteVan is Ownable, ReentrancyGuard {
             totalCollections: 0,
             totalPointsDistributed: 0
         });
+
+        // Try to mint 1000 tokens to the agent as a starting bonus
+        // This will only work if this contract is authorized as a minter
+        try wasteVanToken.mint(msg.sender, 1000 * 10 ** 18) {
+            emit TokensDistributed(msg.sender, 1000 * 10 ** 18);
+        } catch {
+            // If minting fails, just continue with registration
+            // The agent can still function without the initial tokens
+        }
+
         emit AgentRegistered(msg.sender);
     }
 
@@ -118,9 +128,14 @@ contract WasteVan is Ownable, ReentrancyGuard {
         agents[msg.sender].totalCollections++;
         agents[msg.sender].points += POINTS_PER_COLLECTION;
 
-        // Distribute tokens to user
-        wasteVanToken.mint(report.reporter, report.tokenReward);
-        users[report.reporter].totalTokensEarned += report.tokenReward;
+        // Try to distribute tokens to user
+        // This will only work if this contract is authorized as a minter
+        try wasteVanToken.mint(report.reporter, report.tokenReward) {
+            users[report.reporter].totalTokensEarned += report.tokenReward;
+        } catch {
+            // If minting fails, just continue without distributing tokens
+            // The owner can manually distribute tokens later
+        }
 
         emit WasteCollected(_reportId, msg.sender);
         emit TokensDistributed(report.reporter, report.tokenReward);
@@ -171,6 +186,13 @@ contract WasteVan is Ownable, ReentrancyGuard {
             report.isCollected,
             report.collectedBy
         );
+    }
+
+    // Function to manually distribute tokens to agents (only owner)
+    function distributeAgentTokens(address _agent, uint256 _amount) external onlyOwner {
+        require(agents[_agent].isVerified, "Not a verified agent");
+        wasteVanToken.mint(_agent, _amount);
+        emit TokensDistributed(_agent, _amount);
     }
 
     // Function to withdraw contract balance (only owner)

@@ -19,6 +19,16 @@ async function main() {
   const wasteVanAddress = await wasteVan.getAddress();
   console.log("WasteVan deployed to:", wasteVanAddress);
 
+  // Set up minter permissions
+  console.log("Setting up minter permissions...");
+  try {
+    const addMinterTx = await wasteVanToken.addMinter(wasteVanAddress);
+    await addMinterTx.wait();
+    console.log("WasteVan contract added as minter successfully!");
+  } catch (error) {
+    console.log("Error setting up minter permissions:", error);
+  }
+
   // Verify contracts on Etherscan (if not on a local network)
   if (network.name !== "hardhat" && network.name !== "localhost") {
     console.log("Waiting for block confirmations...");
@@ -56,4 +66,4 @@ main()
   .catch((error) => {
     console.error(error);
     process.exit(1);
-  }); 
+  });

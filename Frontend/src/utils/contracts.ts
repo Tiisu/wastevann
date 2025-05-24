@@ -73,7 +73,7 @@ export const registerAgent = async () => {
     const tx = await wasteVan.registerAgent();
     toast.loading(`Transaction submitted. Waiting for confirmation...`);
     await tx.wait();
-    toast.success('Registered as agent successfully!');
+    toast.success('Registered as agent successfully! If token minting is enabled, you should receive 1000 WVT tokens.');
     return tx;
   } catch (error) {
     console.error('Error registering as agent:', error);

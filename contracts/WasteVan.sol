@@ -143,6 +143,10 @@ contract WasteVan is Ownable, ReentrancyGuard {
         require(report.status == VerificationStatus.Pending, "Report already processed");
         require(report.reporter != address(0), "Invalid report");
 
+        // Check if agent has sufficient balance to reward the user
+        uint256 agentBalance = wasteVanToken.balanceOf(msg.sender);
+        require(agentBalance >= report.tokenReward, "Insufficient token balance to reward user");
+
         report.status = VerificationStatus.Approved;
         report.isCollected = true;
         report.collectedBy = msg.sender;
@@ -150,15 +154,11 @@ contract WasteVan is Ownable, ReentrancyGuard {
         // Update agent stats
         agents[msg.sender].totalCollections++;
         agents[msg.sender].points += POINTS_PER_COLLECTION;
+        agents[msg.sender].totalPointsDistributed += report.tokenReward;
 
-        // Try to distribute tokens to user
-        // This will only work if this contract is authorized as a minter
-        try wasteVanToken.mint(report.reporter, report.tokenReward) {
-            users[report.reporter].totalTokensEarned += report.tokenReward;
-        } catch {
-            // If minting fails, just continue without distributing tokens
-            // The owner can manually distribute tokens later
-        }
+        // Transfer tokens from agent to user
+        require(wasteVanToken.transferFromAgent(msg.sender, report.reporter, report.tokenReward), "Token transfer failed");
+        users[report.reporter].totalTokensEarned += report.tokenReward;
 
         emit WasteApproved(_reportId, msg.sender);
         emit WasteCollected(_reportId, msg.sender);

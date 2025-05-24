@@ -54,6 +54,16 @@ contract WasteVan is Ownable, ReentrancyGuard {
 
     constructor(address _tokenAddress) Ownable() {
         wasteVanToken = WasteVanToken(_tokenAddress);
+
+        // Automatically register the deployer as the first agent
+        agents[msg.sender] = Agent({
+            isVerified: true,
+            points: 0,
+            totalCollections: 0,
+            totalPointsDistributed: 0
+        });
+
+        emit AgentRegistered(msg.sender);
     }
 
     function registerUser(string memory _username, string memory _email) external {
@@ -185,6 +195,34 @@ contract WasteVan is Ownable, ReentrancyGuard {
             report.location,
             report.isCollected,
             report.collectedBy
+        );
+    }
+
+    // Get complete waste report details including token reward and timestamp
+    function getWasteReportDetails(uint256 _reportId) external view returns (
+        uint256 reportId,
+        address reporter,
+        string memory ipfsHash,
+        uint256 quantity,
+        string memory wasteType,
+        string memory location,
+        uint256 timestamp,
+        bool isCollected,
+        address collectedBy,
+        uint256 tokenReward
+    ) {
+        WasteReport memory report = wasteReports[_reportId];
+        return (
+            report.reportId,
+            report.reporter,
+            report.ipfsHash,
+            report.quantity,
+            report.wasteType,
+            report.location,
+            report.timestamp,
+            report.isCollected,
+            report.collectedBy,
+            report.tokenReward
         );
     }
 

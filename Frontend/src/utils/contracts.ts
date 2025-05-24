@@ -180,6 +180,16 @@ export const getWasteReport = async (reportId: number) => {
   }
 };
 
+export const getWasteReportDetails = async (reportId: number) => {
+  try {
+    const { wasteVan } = await getContract();
+    return await wasteVan.getWasteReportDetails(reportId);
+  } catch (error) {
+    console.error(`Error getting waste report details #${reportId}:`, error);
+    return null;
+  }
+};
+
 export const getTokenBalance = async (address: string) => {
   try {
     const { wasteVanToken } = await getContract();

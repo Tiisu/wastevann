@@ -8,7 +8,9 @@
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.js --network ethereumSepolia",
     "copy-artifacts": "node scripts/copy-artifacts.js",
-    "postcompile": "npm run copy-artifacts"
+    "postcompile": "npm run copy-artifacts",
+    "test-rewards": "hardhat run scripts/test-reward-system.js --network ethereumSepolia",
+    "setup-minter": "hardhat run scripts/setup-minter.js --network ethereumSepolia"
   },
   "keywords": [],
   "author": "",

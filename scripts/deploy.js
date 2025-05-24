@@ -29,6 +29,24 @@ async function main() {
     console.log("Error setting up minter permissions:", error);
   }
 
+  // Verify deployer is registered as agent
+  console.log("Verifying deployer agent registration...");
+  try {
+    const [signer] = await hre.ethers.getSigners();
+    const deployerAddress = await signer.getAddress();
+    const agentStats = await wasteVan.getAgentStats(deployerAddress);
+
+    if (agentStats[0]) { // isVerified
+      console.log(`✅ Deployer ${deployerAddress} is registered as agent`);
+      console.log(`   Points: ${agentStats[1]}`);
+      console.log(`   Total Collections: ${agentStats[2]}`);
+    } else {
+      console.log(`❌ Deployer ${deployerAddress} is NOT registered as agent`);
+    }
+  } catch (error) {
+    console.log("Error checking agent status:", error);
+  }
+
   // Verify contracts on Etherscan (if not on a local network)
   if (network.name !== "hardhat" && network.name !== "localhost") {
     console.log("Waiting for block confirmations...");

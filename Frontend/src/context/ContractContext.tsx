@@ -20,6 +20,7 @@ interface ContractContextType {
   approveWaste: (reportId: number) => Promise<void>;
   rejectWaste: (reportId: number, reason: string) => Promise<void>;
   purchasePoints: (amount: string) => Promise<void>;
+  refreshTokenBalance: () => Promise<void>;
 }
 
 const ContractContext = createContext<ContractContextType | undefined>(undefined);
@@ -116,10 +117,14 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setIsAgent(true);
       setNeedsRegistration(false);
 
-      // Refresh agent stats
+      // Refresh agent stats and token balance (agents get 1000 WVT bonus)
       if (account) {
         const stats = await contracts.getAgentStats(account);
         setAgentStats(stats);
+
+        // Refresh token balance as agents receive 1000 WVT bonus
+        const balance = await contracts.getTokenBalance(account);
+        setTokenBalance(ethers.formatEther(balance));
       }
     } catch (error) {
       console.error('Error registering agent:', error);
@@ -148,10 +153,14 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const handleCollectWaste = async (reportId: number) => {
     try {
       await contracts.collectWaste(reportId);
-      // Refresh agent stats
+      // Refresh agent stats and token balance
       if (account) {
         const stats = await contracts.getAgentStats(account);
         setAgentStats(stats);
+
+        // Refresh token balance as agents might receive tokens
+        const balance = await contracts.getTokenBalance(account);
+        setTokenBalance(ethers.formatEther(balance));
       }
     } catch (error) {
       console.error('Error collecting waste:', error);
@@ -162,10 +171,14 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const handleApproveWaste = async (reportId: number) => {
     try {
       await contracts.approveWaste(reportId);
-      // Refresh agent stats
+      // Refresh agent stats and token balance
       if (account) {
         const stats = await contracts.getAgentStats(account);
         setAgentStats(stats);
+
+        // Refresh token balance as agents might receive tokens
+        const balance = await contracts.getTokenBalance(account);
+        setTokenBalance(ethers.formatEther(balance));
       }
     } catch (error) {
       console.error('Error approving waste:', error);
@@ -198,6 +211,18 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('Error purchasing points:', error);
       throw error;
+    }
+  };
+
+  const refreshTokenBalance = async () => {
+    if (account) {
+      try {
+        const balance = await contracts.getTokenBalance(account);
+        setTokenBalance(ethers.formatEther(balance));
+      } catch (error) {
+        console.error('Error refreshing token balance:', error);
+        throw error;
+      }
     }
   };
 
@@ -300,6 +325,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     approveWaste: handleApproveWaste,
     rejectWaste: handleRejectWaste,
     purchasePoints: handlePurchasePoints,
+    refreshTokenBalance,
   };
 
   return (

@@ -15,6 +15,7 @@ import { getIPFSGatewayUrl } from '@/utils/ipfsUtils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+
 const AgentDashboard: React.FC = () => {
   const [reports, setReports] = useState<WasteReport[]>([]);
   const [isScanning, setIsScanning] = useState(false);
@@ -58,13 +59,14 @@ const AgentDashboard: React.FC = () => {
           status = 'rejected'; // Rejected
         }
 
+
         return {
           id: Number(report.reportId),
           plasticType,
           quantity: Number(report.quantity),
           location: report.location, // Use location from blockchain if available
           timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
-          rewardEstimate: Number(report.tokenReward),
+          rewardEstimate: Number(report.tokenReward) / 1e18, // Convert from wei to ether
           reporter: report.reporter,
           status,
           ipfsHash: report.ipfsHash, // Store IPFS hash for image viewing

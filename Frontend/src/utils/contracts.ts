@@ -267,7 +267,7 @@ export const getUserWasteReports = async (address: string) => {
                   timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
                   isCollected: report.isCollected,
                   collectedBy: report.collectedBy,
-                  tokenReward: Number(report.tokenReward),
+                  tokenReward: report.tokenReward, // Keep as BigInt for proper conversion
                   status: Number(report.status), // 0: Pending, 1: Approved, 2: Rejected
                   rejectionReason: report.rejectionReason || ""
                 };
@@ -331,7 +331,7 @@ export const getAllWasteReports = async () => {
                 timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
                 isCollected: report.isCollected,
                 collectedBy: report.collectedBy,
-                tokenReward: Number(report.tokenReward),
+                tokenReward: report.tokenReward, // Keep as BigInt for proper conversion
                 status: Number(report.status), // 0: Pending, 1: Approved, 2: Rejected
                 rejectionReason: report.rejectionReason || ""
               };

@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import Footer from '../components/Footer';
 import { uploadToIPFS, getIPFSGatewayUrl, mockIPFSUpload } from '../utils/ipfsUtils';
 import * as contracts from '../utils/contracts';
-import { Image, Upload, X } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 
 interface WasteFormValues {
   plasticType: PlasticType;
@@ -158,19 +158,10 @@ const ReportWaste: React.FC = () => {
     }
   };
 
-  const calculateEstimatedReward = (plasticType: PlasticType, quantity: number): number => {
-    // This would be calculated based on the smart contract logic
-    const baseRates: Record<PlasticType, number> = {
-      [PlasticType.PET]: 2.5,
-      [PlasticType.HDPE]: 2.0,
-      [PlasticType.PVC]: 1.5,
-      [PlasticType.LDPE]: 1.8,
-      [PlasticType.PP]: 2.2,
-      [PlasticType.PS]: 1.7,
-      [PlasticType.OTHER]: 1.0,
-    };
-
-    return Math.round(baseRates[plasticType] * quantity);
+  const calculateEstimatedReward = (_plasticType: PlasticType, quantity: number): number => {
+    // Match smart contract logic: 1 WVT per kg regardless of plastic type
+    // This ensures consistency between frontend estimation and actual blockchain rewards
+    return quantity; // 1 WVT per kg as defined in smart contract TOKENS_PER_POINT
   };
 
   return (

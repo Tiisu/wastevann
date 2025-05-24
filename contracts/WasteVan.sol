@@ -51,7 +51,7 @@ contract WasteVan is Ownable, ReentrancyGuard {
 
     uint256 public reportCounter;
     uint256 public constant POINTS_PER_COLLECTION = 100;
-    uint256 public constant TOKENS_PER_POINT = 1;
+    uint256 public constant TOKENS_PER_POINT = 1 * 10 ** 18; // 1 token in wei (18 decimals)
 
     event UserRegistered(address indexed user, string username, string email);
     event AgentRegistered(address indexed agent);

@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { useWallet, formatAddress } from '@/utils/web3Utils';
 import { toast } from 'sonner';
 import Footer from '@/components/Footer';
-import { Wallet, ArrowUpRight } from 'lucide-react';
-import { getTokenBalance, getUserWasteReports } from '@/utils/contracts';
+import { Wallet, ArrowUpRight, Award, TrendingUp } from 'lucide-react';
+import { getUserWasteReports } from '@/utils/contracts';
+import { useContract } from '@/context/ContractContext';
 import { ethers } from 'ethers';
 
 interface Transaction {
@@ -23,7 +24,7 @@ interface Transaction {
 
 const TokenWallet: React.FC = () => {
   const { account, connectWallet, isConnecting } = useWallet();
-  const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const { tokenBalance: contextTokenBalance, refreshTokenBalance, isAgent, agentStats } = useContract();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,10 +41,8 @@ const TokenWallet: React.FC = () => {
 
     setLoading(true);
     try {
-      // Get token balance from blockchain
-      const balanceWei = await getTokenBalance(account);
-      const balanceEther = parseFloat(ethers.formatEther(balanceWei));
-      setTokenBalance(balanceEther);
+      // Refresh token balance from context
+      await refreshTokenBalance();
 
       // Get waste reports from blockchain
       await fetchWasteReports(account);
@@ -77,7 +76,7 @@ const TokenWallet: React.FC = () => {
         return {
           id: Number(report.reportId),
           type: 'Earned',
-          amount: report.status === 1 ? Number(ethers.formatEther(report.tokenReward)) : 0, // Only show tokens for approved reports
+          amount: report.status === 1 ? Number(report.tokenReward) / 1e18 : 0, // Convert from wei to tokens
           timestamp: Number(report.timestamp) * 1000, // Convert from seconds to milliseconds
           address: report.collectedBy || "0x0000000000000000000000000000000000000000",
           description,
@@ -148,10 +147,11 @@ const TokenWallet: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-3xl font-bold text-waste-600 dark:text-waste-400">
-                          {tokenBalance?.toLocaleString()} WVT
+                          {parseFloat(contextTokenBalance).toLocaleString()} WVT
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
                           Connected: {formatAddress(account)}
+                          {isAgent && <span className="ml-2 text-xs bg-waste-100 text-waste-800 px-2 py-1 rounded">Agent</span>}
                         </div>
                       </div>
                     </div>
@@ -188,6 +188,46 @@ const TokenWallet: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Agent Stats Card - Only show for agents */}
+              {isAgent && agentStats && (
+                <Card>
+                  <CardHeader className="bg-green-50 dark:bg-green-900">
+                    <CardTitle>Agent Statistics</CardTitle>
+                    <CardDescription>Your waste collection performance</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center">
+                        <div className="mr-3 p-2 bg-green-100 dark:bg-green-800 rounded-full">
+                          <Award className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                            {agentStats.totalCollections?.toString() || '0'}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            Collections
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="mr-3 p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
+                          <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            {agentStats.points?.toString() || '0'}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            Points
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <Card>

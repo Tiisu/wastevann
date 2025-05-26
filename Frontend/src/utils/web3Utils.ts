@@ -150,27 +150,41 @@ export function getContract(provider: ethers.BrowserProvider | null) {
 
 export async function getWasteStats() {
   try {
-    // Import the proper contract functions
+    // Import the proper contract functions and ethers
     const { getAllWasteReports } = await import('./contracts');
+    const { ethers } = await import('ethers');
 
     // Get all waste reports from the blockchain
     const reports = await getAllWasteReports();
 
     // Calculate total waste collected and tokens distributed
     let totalWaste = 0;
-    let totalTokens = 0;
+    let totalTokensBigInt = BigInt(0);
     let uniqueUsers = new Set();
 
     // Loop through all reports to calculate stats
     reports.forEach(report => {
       totalWaste += Number(report.quantity);
-      totalTokens += Number(report.tokenReward);
+      // Convert tokenReward from wei to ether and add to total
+      if (report.tokenReward) {
+        totalTokensBigInt += BigInt(report.tokenReward.toString());
+      }
       uniqueUsers.add(report.reporter.toLowerCase());
     });
+
+    // Convert total tokens from wei to ether
+    const totalTokens = Number(ethers.formatEther(totalTokensBigInt));
 
     // Calculate environmental impact (simplified calculation)
     // Assuming 1kg of plastic waste = 3kg of CO2 emissions prevented
     const co2Prevented = totalWaste * 3;
+
+    console.log('Waste stats calculated:', {
+      totalWaste,
+      totalTokensBigInt: totalTokensBigInt.toString(),
+      totalTokens,
+      uniqueUsers: uniqueUsers.size
+    });
 
     return {
       totalWasteCollected: totalWaste,

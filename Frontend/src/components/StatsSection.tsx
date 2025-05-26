@@ -49,7 +49,7 @@ const StatsSection: React.FC = () => {
                 Tokens Distributed
               </dt>
               <dd className="mt-1 text-3xl font-semibold text-waste-600 dark:text-waste-400">
-                {loading ? "..." : stats.totalTokensDistributed.toLocaleString()}
+                {loading ? "..." : `${stats.totalTokensDistributed.toLocaleString()} WVT`}
               </dd>
             </div>
             <div className="bg-white dark:bg-gray-700 overflow-hidden shadow rounded-lg p-6 animate-fade-in">

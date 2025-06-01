@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { QrCode, CheckCircle, Loader2, MapPin, Filter, Check, X } from 'lucide-react';
+import { QrCode, CheckCircle, Loader2, MapPin, Filter, Check, X, Recycle, Users, TrendingUp } from 'lucide-react';
 import { PlasticType, WasteReport } from '@/utils/web3Utils';
 import { toast } from 'sonner';
 import Footer from '@/components/Footer';
@@ -14,6 +14,8 @@ import RejectWasteModal from '@/components/RejectWasteModal';
 import { getIPFSGatewayUrl } from '@/utils/ipfsUtils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import LoadingSpinner from '@/components/ui/loading-spinner';
+import { EnhancedCard, EnhancedCardHeader, EnhancedCardContent, EnhancedCardFooter } from '@/components/ui/enhanced-card';
 
 
 const AgentDashboard: React.FC = () => {
@@ -221,86 +223,129 @@ const AgentDashboard: React.FC = () => {
   const rejectedReports = filteredReports.filter(report => report.status === 'rejected');
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-waste-50 dark:from-gray-900 dark:via-gray-800 dark:to-waste-900">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
+        {/* Header Section */}
         <div className="mb-12">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
-                Agent Dashboard
-              </h1>
-              <p className="mt-3 max-w-2xl text-xl text-gray-500 dark:text-gray-400">
-                View and collect nearby waste reports to earn rewards.
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+            <div className="animate-fade-in">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-waste-600 to-waste-400 rounded-xl flex items-center justify-center">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-extrabold gradient-text sm:text-5xl">
+                    Agent Dashboard
+                  </h1>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Active Agent</span>
+                  </div>
+                </div>
+              </div>
+              <p className="max-w-2xl text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
+                View and collect nearby waste reports to earn rewards and help create a cleaner environment.
               </p>
             </div>
-            <div className="flex space-x-2">
-              <Button
-                onClick={fetchWasteReports}
-                disabled={isLoading}
-                className="bg-waste-600 hover:bg-waste-700 text-white"
-              >
-                {isLoading ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Refreshing...</>
-                ) : (
-                  <>Refresh Reports</>
-                )}
-              </Button>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-3 gap-4 lg:min-w-[300px] animate-fade-in" style={{animationDelay: '0.2s'}}>
+              <EnhancedCard variant="glass" padding="sm" className="text-center">
+                <div className="text-2xl font-bold gradient-text">{nearbyReports.length}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Pending</div>
+              </EnhancedCard>
+              <EnhancedCard variant="glass" padding="sm" className="text-center">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{collectedReports.length}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Collected</div>
+              </EnhancedCard>
+              <EnhancedCard variant="glass" padding="sm" className="text-center">
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{rejectedReports.length}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">Rejected</div>
+              </EnhancedCard>
             </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-8 flex flex-wrap gap-3 animate-fade-in" style={{animationDelay: '0.4s'}}>
+            <Button
+              onClick={fetchWasteReports}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-waste-600 to-waste-500 hover:from-waste-700 hover:to-waste-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              {isLoading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Refreshing...</>
+              ) : (
+                <><TrendingUp className="h-4 w-4 mr-2" /> Refresh Reports</>
+              )}
+            </Button>
           </div>
 
           {/* Location filter */}
-          <div className="mt-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-end gap-4">
-              <div className="flex-1">
-                <Label htmlFor="location-filter" className="mb-2 block">Filter by Location</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                  <Input
-                    id="location-filter"
-                    placeholder="Enter location to filter reports..."
-                    className="pl-10"
-                    value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
-                  />
+          <EnhancedCard variant="glass" className="mt-8 animate-fade-in" style={{animationDelay: '0.6s'}}>
+            <EnhancedCardHeader icon={<MapPin className="h-5 w-5 text-waste-600" />}>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Location Filter</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Filter waste reports by location</p>
+            </EnhancedCardHeader>
+            <EnhancedCardContent>
+              <div className="flex flex-col md:flex-row md:items-end gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="location-filter" className="mb-2 block font-medium">Search Location</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                    <Input
+                      id="location-filter"
+                      placeholder="Enter location to filter reports..."
+                      className="pl-10 rounded-xl border-2 focus:border-waste-500"
+                      value={locationFilter}
+                      onChange={(e) => setLocationFilter(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setLocationFilter('')}
-                  disabled={!locationFilter}
-                >
-                  Clear
-                </Button>
-                {currentLocation && (
+                <div className="flex space-x-3">
                   <Button
                     variant="outline"
-                    className="flex items-center"
-                    onClick={() => setLocationFilter(currentLocation)}
+                    onClick={() => setLocationFilter('')}
+                    disabled={!locationFilter}
+                    className="rounded-xl border-2 hover:border-waste-500"
                   >
-                    <MapPin className="h-4 w-4 mr-2" /> Use My Location
+                    Clear
                   </Button>
-                )}
+                  {currentLocation && (
+                    <Button
+                      variant="outline"
+                      className="flex items-center rounded-xl border-2 hover:border-waste-500"
+                      onClick={() => setLocationFilter(currentLocation)}
+                    >
+                      <MapPin className="h-4 w-4 mr-2" /> Use My Location
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
+            </EnhancedCardContent>
+          </EnhancedCard>
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-waste-600" />
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">Loading waste reports from blockchain...</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <LoadingSpinner
+              size="xl"
+              variant="dots"
+              text="Loading waste reports from blockchain..."
+              className="animate-fade-in"
+            />
           </div>
         ) : error ? (
-          <div className="text-center py-12 bg-red-50 dark:bg-red-900 rounded-lg">
-            <p className="text-red-600 dark:text-red-400">{error}</p>
+          <EnhancedCard variant="glass" className="text-center py-12 border-red-200 dark:border-red-800">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h3 className="text-xl font-semibold text-red-600 dark:text-red-400 mb-2">Error Loading Reports</h3>
+            <p className="text-red-600 dark:text-red-400 mb-6">{error}</p>
             <Button
               onClick={() => window.location.reload()}
-              className="mt-4 bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              Retry
+              🔄 Retry
             </Button>
-          </div>
+          </EnhancedCard>
         ) : (
           <div className="space-y-10">
             <div>

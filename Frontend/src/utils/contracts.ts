@@ -6,7 +6,6 @@ import WasteVanABI from '../../contractABI/WasteVan.json';
 import WasteVanTokenABI from '../../contractABI/WasteVanToken.json';
 
 // Contract addresses - these should be updated with your deployed contract addresses
-// You can set these as environment variables in a .env file
 const WASTE_VAN_TOKEN_ADDRESS = import.meta.env.VITE_WASTE_VAN_TOKEN_ADDRESS;
 const WASTE_VAN_ADDRESS = import.meta.env.VITE_WASTE_VAN_ADDRESS;
 

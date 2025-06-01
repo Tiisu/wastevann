@@ -73,7 +73,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 164 74% 53%;
-    
+
     --sidebar-background: 164 74% 23%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 164 74% 53%;
@@ -100,16 +100,63 @@
   .waste-gradient {
     @apply bg-gradient-to-br from-waste-300 to-waste-600;
   }
-  
+
+  .waste-gradient-subtle {
+    @apply bg-gradient-to-br from-waste-50 via-waste-100 to-waste-200 dark:from-waste-900 dark:via-waste-800 dark:to-waste-700;
+  }
+
   .eco-section {
     @apply py-16 px-4 md:px-8;
   }
-  
+
   .section-heading {
     @apply text-3xl md:text-4xl font-bold mb-6 text-waste-800 dark:text-waste-200;
   }
-  
+
   .section-subheading {
     @apply text-xl md:text-2xl font-semibold mb-4 text-waste-700 dark:text-waste-300;
+  }
+
+  .glass-card {
+    @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 shadow-xl;
+  }
+
+  .floating-card {
+    @apply transform transition-all duration-300 hover:scale-105 hover:shadow-2xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-waste-600 to-waste-400 bg-clip-text text-transparent;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
 }

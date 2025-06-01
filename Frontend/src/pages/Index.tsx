@@ -89,39 +89,37 @@ const CallToAction: React.FC = () => {
   const { account, isUser, isAgent } = useContract();
 
   return (
-    <div className="relative bg-gradient-to-r from-waste-600 via-waste-500 to-waste-600 dark:from-waste-800 dark:via-waste-700 dark:to-waste-800 overflow-hidden">
+    <><div className="relative bg-gradient-to-r from-waste-600 via-waste-500 to-waste-600 dark:from-waste-800 dark:via-waste-700 dark:to-waste-800 overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-        <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full animate-float"></div>
-        <div className="absolute bottom-10 left-10 w-24 h-24 bg-white/10 rounded-full animate-float" style={{animationDelay: '2s'}}></div>
-      </div>
-
-      <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:py-20 lg:px-8 lg:flex lg:items-center lg:justify-between relative">
+        <div className="absolute top-0 left-0 w-full h-full" /></div>
+      <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full animate-float"></div>
+      <div className="absolute bottom-10 left-10 w-24 h-24 bg-white/10 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+    </div><div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:py-20 lg:px-8 lg:flex lg:items-center lg:justify-between relative">
         <div className="lg:w-0 lg:flex-1">
           <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl text-shadow-lg">
             {account && isUser ? (
               <>
                 <span className="block animate-fade-in">Ready to collect more waste?</span>
-                <span className="block text-waste-100 mt-2 animate-fade-in" style={{animationDelay: '0.2s'}}>Every piece of plastic makes a difference.</span>
+                <span className="block text-waste-100 mt-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>Every piece of plastic makes a difference.</span>
               </>
             ) : account && isAgent ? (
               <>
                 <span className="block animate-fade-in">Ready to collect waste?</span>
-                <span className="block text-waste-100 mt-2 animate-fade-in" style={{animationDelay: '0.2s'}}>Help users turn waste into tokens.</span>
+                <span className="block text-waste-100 mt-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>Help users turn waste into tokens.</span>
               </>
             ) : (
               <>
                 <span className="block animate-fade-in">Ready to make an impact?</span>
-                <span className="block text-waste-100 mt-2 animate-fade-in" style={{animationDelay: '0.2s'}}>Join the WasteVan community today.</span>
+                <span className="block text-waste-100 mt-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>Join the WasteVan community today.</span>
               </>
             )}
           </h2>
-          <p className="mt-6 text-xl text-waste-100 max-w-3xl animate-fade-in" style={{animationDelay: '0.4s'}}>
+          <p className="mt-6 text-xl text-waste-100 max-w-3xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
             Be part of the solution. Transform waste into value and help create a sustainable future for our planet.
           </p>
         </div>
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 lg:mt-0 lg:flex-shrink-0 animate-fade-in" style={{animationDelay: '0.6s'}}>
+        <div className="mt-10 flex flex-col sm:flex-row gap-4 lg:mt-0 lg:flex-shrink-0 animate-fade-in" style={{ animationDelay: '0.6s' }}>
           {account && isUser ? (
             // User is registered
             <div className="floating-card">
@@ -169,8 +167,7 @@ const CallToAction: React.FC = () => {
             </>
           )}
         </div>
-      </div>
-    </div>
+      </div></>
   );
 };
 

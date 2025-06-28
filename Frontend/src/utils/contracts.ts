@@ -245,7 +245,7 @@ export const getUserWasteReports = async (address: string) => {
     const reportCount = await wasteVan.reportCounter();
 
     // Convert BigInt to number for iteration
-    const count = Number(reportCount);
+    const count = Number(reportCount.toString());
     console.log(`Total waste reports in contract: ${count}`);
 
     const reports = [];
@@ -267,14 +267,14 @@ export const getUserWasteReports = async (address: string) => {
                   reportId: j,
                   reporter: report.reporter,
                   ipfsHash: report.ipfsHash,
-                  quantity: Number(report.quantity),
+                  quantity: Number(report.quantity.toString()),
                   wasteType: report.wasteType,
                   location: report.location,
-                  timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
+                  timestamp: Number(report.timestamp.toString()) * 1000, // Convert to milliseconds
                   isCollected: report.isCollected,
                   collectedBy: report.collectedBy,
                   tokenReward: report.tokenReward, // Keep as BigInt for proper conversion
-                  status: Number(report.status), // 0: Pending, 1: Approved, 2: Rejected
+                  status: Number(report.status.toString()), // 0: Pending, 1: Approved, 2: Rejected
                   rejectionReason: report.rejectionReason || ""
                 };
                 return fullReport;
@@ -310,7 +310,7 @@ export const getAllWasteReports = async () => {
     const reportCount = await wasteVan.reportCounter();
 
     // Convert BigInt to number for iteration
-    const count = Number(reportCount);
+    const count = Number(reportCount.toString());
     console.log(`Total waste reports in contract: ${count}`);
 
     const reports = [];
@@ -331,14 +331,14 @@ export const getAllWasteReports = async () => {
                 reportId: j,
                 reporter: report.reporter,
                 ipfsHash: report.ipfsHash,
-                quantity: Number(report.quantity),
+                quantity: Number(report.quantity.toString()),
                 wasteType: report.wasteType,
                 location: report.location,
-                timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
+                timestamp: Number(report.timestamp.toString()) * 1000, // Convert to milliseconds
                 isCollected: report.isCollected,
                 collectedBy: report.collectedBy,
                 tokenReward: report.tokenReward, // Keep as BigInt for proper conversion
-                status: Number(report.status), // 0: Pending, 1: Approved, 2: Rejected
+                status: Number(report.status.toString()), // 0: Pending, 1: Approved, 2: Rejected
                 rejectionReason: report.rejectionReason || ""
               };
               return fullReport;
@@ -364,3 +364,4 @@ export const getAllWasteReports = async () => {
     return [];
   }
 };
+

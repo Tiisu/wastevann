@@ -1,8 +1,8 @@
-# WasteVan Reward System
+# WasteVan Fully On-Chain Reward System
 
 ## Overview
 
-The WasteVan DApp implements a comprehensive reward system where users earn WasteVan Tokens (WVT) for reporting waste, and agents (waste collectors) verify and collect the waste to distribute rewards.
+The WasteVan DApp implements a comprehensive, fully decentralized reward system where users earn WasteVan Tokens (WVT) for reporting waste, and agents (waste collectors) verify and collect the waste to distribute rewards. All data and logic is stored and executed on-chain with no backend dependencies.
 
 ## How It Works
 
@@ -51,8 +51,9 @@ The WasteVan DApp implements a comprehensive reward system where users earn Wast
 - No need for manual agent registration for the deployer
 
 ### Real-time Blockchain Data
-- Agent dashboard displays live data from the blockchain
-- All waste reports and their status are fetched in real-time
+- Agent dashboard displays live data directly from the blockchain
+- All waste reports and their status are fetched in real-time from smart contracts
+- No backend servers or databases required
 
 ### Token Rewards
 - 1 WVT token per kg of waste reported
@@ -129,8 +130,10 @@ VITE_WASTE_VAN_ADDRESS=<deployed_wastevan_address>
 
 ## Future Enhancements
 
-- Multiple agent support
-- Dynamic reward rates based on waste type
-- Staking mechanisms for agents
-- Geographic zones for agent assignments
-- Integration with real waste management systems
+- Multiple agent support with on-chain governance
+- Dynamic reward rates based on waste type via smart contract parameters
+- Staking mechanisms for agents with slashing conditions
+- Geographic zones for agent assignments using on-chain location data
+- Integration with IoT devices for automated waste detection
+- Cross-chain compatibility for multi-network deployment
+- DAO governance for system parameters and upgrades

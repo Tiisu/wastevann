@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, FileText, Home, Recycle, Users, Wallet, BarChart2 } from 'lucide-react';
+import { Menu, X, FileText, Home, Recycle, Users, Wallet, BarChart2, MessageCircle } from 'lucide-react';
 import ConnectWalletButton from './ConnectWalletButton';
 import { Button } from '../components/ui/button';
 import { useContract } from '../context/ContractContext';
@@ -46,10 +46,16 @@ const Navbar: React.FC = () => {
 
               {/* User-only links */}
               {account && isUser && (
-                <Link to="/report-waste" className="px-4 py-2 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-waste-600 dark:hover:text-waste-400 hover:bg-waste-50 dark:hover:bg-waste-900/20 flex items-center transition-all duration-200 group">
-                  <Recycle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                  Report Waste
-                </Link>
+                <>
+                  <Link to="/report-waste" className="px-4 py-2 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-waste-600 dark:hover:text-waste-400 hover:bg-waste-50 dark:hover:bg-waste-900/20 flex items-center transition-all duration-200 group">
+                    <Recycle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                    Report Waste
+                  </Link>
+                  <Link to="/my-reports" className="px-4 py-2 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-waste-600 dark:hover:text-waste-400 hover:bg-waste-50 dark:hover:bg-waste-900/20 flex items-center transition-all duration-200 group">
+                    <MessageCircle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                    My Reports
+                  </Link>
+                </>
               )}
 
               {/* Agent-only links */}
@@ -113,13 +119,22 @@ const Navbar: React.FC = () => {
 
             {/* User-only links */}
             {account && isUser && (
-              <Link to="/report-waste"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-waste-600 dark:hover:text-waste-400 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Recycle className="h-5 w-5 mr-2" />
-                Report Waste
-              </Link>
+              <>
+                <Link to="/report-waste"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-waste-600 dark:hover:text-waste-400 flex items-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Recycle className="h-5 w-5 mr-2" />
+                  Report Waste
+                </Link>
+                <Link to="/my-reports"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-waste-600 dark:hover:text-waste-400 flex items-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <MessageCircle className="h-5 w-5 mr-2" />
+                  My Reports
+                </Link>
+              </>
             )}
 
             {/* Agent-only links */}

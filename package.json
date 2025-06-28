@@ -1,7 +1,7 @@
 {
   "name": "wastevan",
   "version": "1.0.0",
-  "description": "WasteVan DApp for waste management",
+  "description": "Fully on-chain WasteVan DApp for decentralized waste management",
   "main": "index.js",
   "scripts": {
     "test": "hardhat test",
@@ -10,14 +10,19 @@
     "copy-artifacts": "node scripts/copy-artifacts.js",
     "postcompile": "npm run copy-artifacts",
     "test-rewards": "hardhat run scripts/test-reward-system.js --network ethereumSepolia",
-    "setup-minter": "hardhat run scripts/setup-minter.js --network ethereumSepolia"
+    "setup-minter": "hardhat run scripts/setup-minter.js --network ethereumSepolia",
+    "check-setup": "hardhat run scripts/check-setup.js --network ethereumSepolia",
+    "verify-deployment": "hardhat run scripts/verify-deployment.js --network ethereumSepolia",
+    "frontend:dev": "cd Frontend && npm run dev",
+    "frontend:build": "cd Frontend && npm run build",
+    "frontend:install": "cd Frontend && npm install"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "fs-extra": "^11.3.0",
     "hardhat": "^2.19.5"
   },

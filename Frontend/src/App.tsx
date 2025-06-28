@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Registration from "./pages/Registration";
 import ReportWaste from "./pages/ReportWaste";
+import UserReports from "./pages/UserReports";
 import AgentDashboard from "./pages/AgentDashboard";
 import TokenWallet from "./pages/TokenWallet";
 import CommunityImpact from "./pages/CommunityImpact";
@@ -48,6 +49,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiresAuth requiresUser>
                   <ReportWaste />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-reports"
+              element={
+                <ProtectedRoute requiresAuth requiresUser>
+                  <UserReports />
                 </ProtectedRoute>
               }
             />

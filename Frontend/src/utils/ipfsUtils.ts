@@ -2,8 +2,8 @@ import { toast } from 'sonner';
 import axios from 'axios';
 
 // Pinata configuration
-const PINATA_API_KEY = import.meta.env.VITE_PINATA_API_KEY ;
-const PINATA_API_SECRET = import.meta.env.VITE_PINATA_API_SECRET;
+const PINATA_API_KEY = import.meta.env.VITE_PINATA_API_KEY;
+const PINATA_API_SECRET = import.meta.env.VITE_PINATA_SECRET_KEY;
 const PINATA_JWT = import.meta.env.VITE_PINATA_JWT;
 
 // Pinata API endpoints
@@ -82,9 +82,9 @@ export const uploadToIPFS = async (file: File): Promise<string> => {
  * @returns The gateway URL
  */
 export const getIPFSGatewayUrl = (ipfsHash: string): string => {
-  // Using Pinata's gateway (if you have a dedicated gateway)
-  // You can also use public gateways like ipfs.io or cloudflare-ipfs.com
-  return `https://app.pinata.cloud/ipfs/${ipfsHash}`;
+  // Using Pinata's dedicated gateway for better performance
+  // Fallback to public gateways if needed
+  return `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
 };
 
 /**

@@ -164,7 +164,7 @@ export async function getWasteStats() {
 
     // Loop through all reports to calculate stats
     reports.forEach(report => {
-      totalWaste += Number(report.quantity);
+      totalWaste += Number(report.quantity.toString());
       // Convert tokenReward from wei to ether and add to total
       if (report.tokenReward) {
         totalTokensBigInt += BigInt(report.tokenReward.toString());

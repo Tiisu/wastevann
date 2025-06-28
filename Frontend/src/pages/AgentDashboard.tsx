@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { QrCode, CheckCircle, Loader2, MapPin, Filter, Check, X, Recycle, Users, TrendingUp } from 'lucide-react';
+import { QrCode, CheckCircle, Loader2, MapPin, Filter, Check, X, Recycle, Users, TrendingUp, MessageCircle } from 'lucide-react';
 import { PlasticType, WasteReport } from '@/utils/web3Utils';
 import { toast } from 'sonner';
 import Footer from '@/components/Footer';
@@ -11,6 +11,8 @@ import * as contracts from '@/utils/contracts';
 import { useContract } from '@/context/ContractContext';
 import QRScannerModal from '@/components/QRScannerModal';
 import RejectWasteModal from '@/components/RejectWasteModal';
+import ChatModal from '@/components/ChatModal';
+import MessageNotification from '@/components/MessageNotification';
 import { getIPFSGatewayUrl } from '@/utils/ipfsUtils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +29,8 @@ const AgentDashboard: React.FC = () => {
   const [locationFilter, setLocationFilter] = useState<string>('');
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [selectedChatReport, setSelectedChatReport] = useState<WasteReport | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string | null>(null);
   const [processingReportId, setProcessingReportId] = useState<number | null>(null);
   const { collectWaste, approveWaste, rejectWaste } = useContract();
@@ -37,8 +41,10 @@ const AgentDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
+      console.log("Agent Dashboard: Fetching all waste reports from blockchain...");
       // Get all waste reports from the blockchain
       const blockchainReports = await contracts.getAllWasteReports();
+      console.log(`Agent Dashboard: Retrieved ${blockchainReports.length} reports:`, blockchainReports);
 
       // Map blockchain reports to the WasteReport interface
       const mappedReports: WasteReport[] = blockchainReports.map(report => {
@@ -63,12 +69,12 @@ const AgentDashboard: React.FC = () => {
 
 
         return {
-          id: Number(report.reportId),
+          id: Number(report.reportId.toString()),
           plasticType,
-          quantity: Number(report.quantity),
+          quantity: Number(report.quantity.toString()),
           location: report.location, // Use location from blockchain if available
-          timestamp: Number(report.timestamp) * 1000, // Convert to milliseconds
-          rewardEstimate: Number(report.tokenReward) / 1e18, // Convert from wei to ether
+          timestamp: Number(report.timestamp.toString()) * 1000, // Convert to milliseconds
+          rewardEstimate: Number(report.tokenReward.toString()) / 1e18, // Convert from wei to ether
           reporter: report.reporter,
           status,
           ipfsHash: report.ipfsHash, // Store IPFS hash for image viewing
@@ -76,8 +82,14 @@ const AgentDashboard: React.FC = () => {
         };
       });
 
+      console.log(`Agent Dashboard: Mapped ${mappedReports.length} reports:`, mappedReports);
       setReports(mappedReports);
-      toast.success("Waste reports loaded from blockchain");
+      
+      if (mappedReports.length > 0) {
+        toast.success(`Loaded ${mappedReports.length} waste reports from blockchain`);
+      } else {
+        toast.info("No waste reports found in the system");
+      }
     } catch (err) {
       console.error("Error fetching waste reports:", err);
       setError("Failed to load waste reports from blockchain. Please try again later.");
@@ -203,6 +215,17 @@ const AgentDashboard: React.FC = () => {
       toast.error("Failed to reject waste");
       throw err; // Re-throw to be caught by the reject modal
     }
+  };
+
+  // Chat handlers
+  const handleOpenChat = (report: WasteReport) => {
+    setSelectedChatReport(report);
+    setShowChatModal(true);
+  };
+
+  const handleCloseChat = () => {
+    setShowChatModal(false);
+    setSelectedChatReport(null);
   };
 
   const formatTimestamp = (timestamp: number): string => {
@@ -427,6 +450,20 @@ const AgentDashboard: React.FC = () => {
                             <X className="h-4 w-4 mr-2" /> Reject
                           </Button>
                         </div>
+
+                        {/* Chat Button */}
+                        <Button
+                          onClick={() => handleOpenChat(report)}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Chat with Reporter
+                          <MessageNotification 
+                            reportId={report.id} 
+                            className="ml-2"
+                          />
+                        </Button>
                       </CardFooter>
                     </Card>
                   ))}
@@ -481,6 +518,20 @@ const AgentDashboard: React.FC = () => {
                           </div>
                         </div>
                       </CardContent>
+                      <CardFooter>
+                        <Button
+                          onClick={() => handleOpenChat(report)}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Chat with Reporter
+                          <MessageNotification 
+                            reportId={report.id} 
+                            className="ml-2"
+                          />
+                        </Button>
+                      </CardFooter>
                     </Card>
                   ))}
                 </div>
@@ -562,6 +613,17 @@ const AgentDashboard: React.FC = () => {
           onClose={handleCloseRejectModal}
           onReject={handleManualReject}
           reportId={selectedReportId}
+        />
+      )}
+
+      {/* Chat Modal */}
+      {showChatModal && selectedChatReport && (
+        <ChatModal
+          isOpen={showChatModal}
+          onClose={handleCloseChat}
+          reportId={selectedChatReport.id}
+          reporterAddress={selectedChatReport.reporter}
+          collectedBy={selectedChatReport.collectedBy}
         />
       )}
     </div>

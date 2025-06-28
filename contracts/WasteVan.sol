@@ -143,10 +143,6 @@ contract WasteVan is Ownable, ReentrancyGuard {
         require(report.status == VerificationStatus.Pending, "Report already processed");
         require(report.reporter != address(0), "Invalid report");
 
-        // Check if agent has sufficient balance to reward the user
-        uint256 agentBalance = wasteVanToken.balanceOf(msg.sender);
-        require(agentBalance >= report.tokenReward, "Insufficient token balance to reward user");
-
         report.status = VerificationStatus.Approved;
         report.isCollected = true;
         report.collectedBy = msg.sender;
@@ -156,13 +152,17 @@ contract WasteVan is Ownable, ReentrancyGuard {
         agents[msg.sender].points += POINTS_PER_COLLECTION;
         agents[msg.sender].totalPointsDistributed += report.tokenReward;
 
-        // Transfer tokens from agent to user
-        require(wasteVanToken.transferFromAgent(msg.sender, report.reporter, report.tokenReward), "Token transfer failed");
-        users[report.reporter].totalTokensEarned += report.tokenReward;
+        // Mint new tokens to reward the user
+        try wasteVanToken.mint(report.reporter, report.tokenReward) {
+            users[report.reporter].totalTokensEarned += report.tokenReward;
+            emit TokensDistributed(report.reporter, report.tokenReward);
+        } catch {
+            // If minting fails, revert the transaction
+            revert("Token minting failed - check minter permissions");
+        }
 
         emit WasteApproved(_reportId, msg.sender);
         emit WasteCollected(_reportId, msg.sender);
-        emit TokensDistributed(report.reporter, report.tokenReward);
     }
 
     function rejectWaste(uint256 _reportId, string memory _reason) external {
@@ -268,6 +268,7 @@ contract WasteVan is Ownable, ReentrancyGuard {
         wasteVanToken.mint(_agent, _amount);
         emit TokensDistributed(_agent, _amount);
     }
+
 
     // Function to withdraw contract balance (only owner)
     function withdraw() external onlyOwner {

@@ -3,13 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useWallet, formatAddress } from '@/utils/web3Utils';
+import { formatAddress } from '@/utils/web3Utils';
 import { toast } from 'sonner';
 import Footer from '@/components/Footer';
 import { Wallet, ArrowUpRight, Award, TrendingUp } from 'lucide-react';
 import { getUserWasteReports } from '@/utils/contracts';
 import { useContract } from '@/context/ContractContext';
 import { ethers } from 'ethers';
+import BlockchainDebugger from '@/components/BlockchainDebugger';
 
 interface Transaction {
   id: number;
@@ -23,8 +24,7 @@ interface Transaction {
 }
 
 const TokenWallet: React.FC = () => {
-  const { account, connectWallet, isConnecting } = useWallet();
-  const { tokenBalance: contextTokenBalance, refreshTokenBalance, isAgent, agentStats } = useContract();
+  const { account, connectWallet, tokenBalance: contextTokenBalance, refreshTokenBalance, isAgent, agentStats } = useContract();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +56,9 @@ const TokenWallet: React.FC = () => {
 
   const fetchWasteReports = async (address: string) => {
     try {
+      console.log(`Fetching waste reports for address: ${address}`);
       const reports = await getUserWasteReports(address);
+      console.log(`Retrieved ${reports.length} waste reports:`, reports);
 
       // Convert waste reports to transaction format
       const txs: Transaction[] = reports.map(report => {
@@ -73,22 +75,32 @@ const TokenWallet: React.FC = () => {
           description += ` (${report.rejectionReason})`;
         }
 
-        return {
-          id: Number(report.reportId),
-          type: 'Earned',
-          amount: report.status === 1 ? Number(report.tokenReward) / 1e18 : 0, // Convert from wei to tokens
-          timestamp: Number(report.timestamp) * 1000, // Convert from seconds to milliseconds
+        const transaction = {
+          id: Number(report.reportId.toString()),
+          type: 'Earned' as const,
+          amount: report.status === 1 ? Number(report.tokenReward.toString()) / 1e18 : 0, // Convert from wei to tokens
+          timestamp: Number(report.timestamp.toString()), // Already in milliseconds from getUserWasteReports
           address: report.collectedBy || "0x0000000000000000000000000000000000000000",
           description,
           status: report.status, // Store the numeric status for easier checking
           rejectionReason: report.rejectionReason
         };
+
+        console.log(`Mapped transaction:`, transaction);
+        return transaction;
       });
 
       // Sort by timestamp (newest first)
       txs.sort((a, b) => b.timestamp - a.timestamp);
 
+      console.log(`Setting ${txs.length} transactions:`, txs);
       setTransactions(txs);
+      
+      if (txs.length > 0) {
+        toast.success(`Loaded ${txs.length} waste reports from blockchain`);
+      } else {
+        toast.info("No waste reports found for this address");
+      }
     } catch (error) {
       console.error("Error fetching waste reports:", error);
       toast.error("Failed to load waste reports from blockchain");
@@ -123,10 +135,9 @@ const TokenWallet: React.FC = () => {
             </p>
             <Button
               onClick={connectWallet}
-              disabled={isConnecting}
               className="bg-waste-600 hover:bg-waste-700 text-white"
             >
-              {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+              Connect Wallet
             </Button>
           </div>
         ) : (
@@ -204,7 +215,7 @@ const TokenWallet: React.FC = () => {
                         </div>
                         <div>
                           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {agentStats.totalCollections?.toString() || '0'}
+                            {agentStats && agentStats[2] ? agentStats[2].toString() : '0'}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             Collections
@@ -217,7 +228,7 @@ const TokenWallet: React.FC = () => {
                         </div>
                         <div>
                           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {agentStats.points?.toString() || '0'}
+                            {agentStats && agentStats[1] ? agentStats[1].toString() : '0'}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             Points
@@ -292,6 +303,11 @@ const TokenWallet: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Debugging Component - Remove in production */}
+            <div className="mt-8">
+              <BlockchainDebugger />
+            </div>
           </div>
         )}
       </div>

@@ -15,7 +15,7 @@ interface ContractContextType {
   disconnectWallet: () => void;
   registerUser: (username: string, email: string) => Promise<void>;
   registerAgent: () => Promise<void>;
-  reportWaste: (ipfsHash: string, quantity: number, wasteType: string) => Promise<void>;
+  reportWaste: (ipfsHash: string, quantity: number, wasteType: string, location?: string) => Promise<void>;
   collectWaste: (reportId: number) => Promise<void>;
   approveWaste: (reportId: number) => Promise<void>;
   rejectWaste: (reportId: number, reason: string) => Promise<void>;
@@ -52,7 +52,8 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Check if user is registered
         const stats = await contracts.getUserStats(userAddress);
         console.log('Raw user stats from contract:', stats);
-        userRegistered = !!(stats && stats.username && stats.username.length > 0);
+        // Check if stats[0] (username) exists and is not empty
+        userRegistered = !!(stats && stats[0] && stats[0].length > 0);
         console.log('User registration status:', { userRegistered, stats });
         setIsUser(userRegistered);
         setUserStats(stats);
@@ -66,7 +67,8 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Check if user is an agent
         const agentStats = await contracts.getAgentStats(userAddress);
         console.log('Raw agent stats from contract:', agentStats);
-        agentRegistered = !!(agentStats && agentStats.isVerified);
+        // Check if agentStats[0] (isVerified) is true
+        agentRegistered = !!(agentStats && agentStats[0] === true);
         console.log('Agent registration status:', { agentRegistered, agentStats });
         setIsAgent(agentRegistered);
         setAgentStats(agentStats);
@@ -150,9 +152,13 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const handleReportWaste = async (ipfsHash: string, quantity: number, wasteType: string) => {
+  const handleReportWaste = async (ipfsHash: string, quantity: number, wasteType: string, location?: string) => {
     try {
-      await contracts.reportWaste(ipfsHash, quantity, wasteType);
+      if (location) {
+        await contracts.reportWasteWithLocation(ipfsHash, quantity, wasteType, location);
+      } else {
+        await contracts.reportWaste(ipfsHash, quantity, wasteType);
+      }
       // Refresh user stats
       if (account) {
         const stats = await contracts.getUserStats(account);
@@ -244,6 +250,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+
   useEffect(() => {
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
@@ -266,7 +273,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Refresh user data
         try {
           const stats = await contracts.getUserStats(newAccount);
-          userRegistered = !!(stats && stats.username && stats.username.length > 0);
+          userRegistered = !!(stats && stats[0] && stats[0].length > 0);
           setIsUser(userRegistered);
           setUserStats(stats);
         } catch (error) {
@@ -278,7 +285,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Refresh agent data
         try {
           const agentStats = await contracts.getAgentStats(newAccount);
-          agentRegistered = !!(agentStats && agentStats.isVerified);
+          agentRegistered = !!(agentStats && agentStats[0] === true);
           setIsAgent(agentRegistered);
           setAgentStats(agentStats);
         } catch (error) {

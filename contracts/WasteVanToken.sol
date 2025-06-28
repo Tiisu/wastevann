@@ -38,10 +38,5 @@ contract WasteVanToken is ERC20, Ownable {
         _burn(msg.sender, amount);
     }
 
-    // Allow authorized minters to transfer tokens on behalf of users (for reward distribution)
-    function transferFromAgent(address from, address to, uint256 amount) public onlyMinter returns (bool) {
-        require(balanceOf(from) >= amount, "Insufficient balance");
-        _transfer(from, to, amount);
-        return true;
-    }
+    // Function removed - using direct minting for rewards instead of transfers
 }

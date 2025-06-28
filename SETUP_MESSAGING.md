@@ -18,10 +18,7 @@ npm install
 #### Configure Environment
 Create `.env` file in the backend directory:
 ```env
-MongoDB_URL=mongodb+srv://kwamehnadh:wup0cg4JNvjiafsH@cluster0.rdgeyau.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-PORT=3001
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
+
 ```
 
 #### Start Backend Server
